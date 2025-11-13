@@ -7,7 +7,7 @@ name = "peterbot"
 version = "0.1.0"
 description = "Gather information from Catholic organizations."
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.10"
 authors = [
   { name = "Joe May" }
 ]
