@@ -1,33 +1,30 @@
+"""Test job implementation for peterbot.
+
+This module demonstrates a minimal job lifecycle:
+- allocate a new job id and records directory
+- create a simple artifact under that directory
+"""
+
 from pathlib import Path
 
+from peterbot.jobs.utils import job
 
-from peterbot.data_json import jobs_json
 
+def run(data_path: Path) -> None:
+    """Run the test job and persist its records.
 
-def run(data_path: Path):
+    Parameters:
+    - data_path: Base directory for all job data, containing `jobs.json` and
+      the `jobs/` subdirectory for per-job records.
+    """
 
-    # jobs_json_path = data_path / "jobs.json"
-    # job_id = jobs_json.max_job_id(jobs_json_path) + 1
-    # job_folder_path = data_path / "jobs" / str(job_id)
-    # job_folder_path.mkdir(parents=True, exist_ok=True)  # make any parent dirs
+    # start job
+    job_id, records_path = job.start_job(data_path)
 
-    job_id, job_folder_path, jobs_json_path = start_job(data_path)
-
-    artifact_file = job_folder_path / "artifact.txt"
+    artifact_file = records_path / "artifact.txt"
     artifact_file.write_text("Other data here.", encoding="utf-8")
 
     job_data = {"job_id": job_id, "job": "test_job"}
 
-    jobs_json.save_job(job_data, jobs_json_path)
-
-    return
-
-
-def start_job(data_path):
-    jobs_json_path = data_path / "jobs.json"
-    job_id = jobs_json.max_job_id(jobs_json_path) + 1
-    job_folder_path = data_path / "jobs" / str(job_id)
-    job_folder_path.mkdir(parents=True, exist_ok=True)  # make any parent dirs
-    print("starting job")
-
-    return job_id, job_folder_path, jobs_json_path
+    # end job
+    job.end_job(job_data, data_path)

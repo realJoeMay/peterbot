@@ -7,12 +7,12 @@ name = "peterbot"
 version = "0.1.0"
 description = "Gather information from Catholic organizations."
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 authors = [
   { name = "Joe May" }
 ]
 dependencies = [
-  # "requests>=2.32",
+  "requests",
 ]
 
 [project.optional-dependencies]
@@ -41,10 +41,18 @@ target-version = "py311"
 src = ["src", "tests"]
 
 [tool.ruff.lint]
-select = ["E", "F", "I", "B"]
+select = ["E", "F", "I", "B", "D"]
 ignore = []
 
 [tool.ruff.format]
 quote-style = "double"
 indent-style = "space"
 line-ending = "auto"
+
+# Use Google-style docstrings when pydocstyle rules are enabled
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+# Native pydocstyle configuration (if running pydocstyle directly)
+[tool.pydocstyle]
+convention = "google"
