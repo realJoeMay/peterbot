@@ -1,4 +1,11 @@
-# todo - add docstring
+"""Lightweight helpers for a JSON-backed jobs store.
+
+Provides utilities to append a job record to a JSON file and to compute
+the maximum ``job_id`` present. The module is resilient to empty or
+malformed files and coerces single-object payloads into a list to keep
+the on-disk structure consistent and simple.
+"""
+
 import json
 from pathlib import Path
 
@@ -23,7 +30,6 @@ def save_job(job: dict, jobs_json: Path):
     Returns:
     - None
     """
-
     # Load existing jobs data, handling empty or invalid JSON
     data = None
     if jobs_json.exists() and jobs_json.stat().st_size > 0:
@@ -46,7 +52,7 @@ def save_job(job: dict, jobs_json: Path):
     data.append(job)
 
     with jobs_json.open("w", encoding="utf-8") as f:
-        json.dump(data, f, indent=2, ensure_ascii=False)
+        json.dump(data, f, cls=PathEncoder, indent=2, ensure_ascii=False)
 
 
 def max_job_id(jobs_json: Path) -> int:
@@ -86,3 +92,12 @@ def max_job_id(jobs_json: Path) -> int:
                 except (ValueError, TypeError):
                     pass
     return max(ids) if ids else 0
+
+
+# duplicate class to job.py, need to make cleaner
+class PathEncoder(json.JSONEncoder):
+
+    def default(self, o):
+        if isinstance(o, Path):
+            return str(o)
+        return super().default(o)
