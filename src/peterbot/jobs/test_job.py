@@ -23,4 +23,4 @@ def run(data_path: Path) -> None:
     artifact_file = records_path / "artifact.txt"
     artifact_file.write_text("Other data here.", encoding="utf-8")
 
-    job.end_job(job_data, data_path)
+    job.end_job(job_data)

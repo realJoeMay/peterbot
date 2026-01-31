@@ -60,7 +60,7 @@ def run(data_dir: Path, diocese_site_id: int) -> None:
             writer.writerow([value])
 
     # end job
-    job.end_job(job_data, data_dir)
+    job.end_job(job_data)
 
 
 def map_links(downloads_dir: Path) -> dict[str, list[str]]:

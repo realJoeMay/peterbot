@@ -1,46 +1,46 @@
-"""Common helpers for job lifecycle and paths.
-
-This module provides utilities to:
-- Allocate a new job identifier and ensure the corresponding records directory
-  exists on disk.
-- Persist finalized job metadata both to the global jobs database and into the
-  per-job records directory.
-- Resolve canonical paths for the global jobs JSON file and per-job folders.
-"""
+"""Common helpers for job lifecycle and paths."""
 
 import json
 from datetime import datetime
 from pathlib import Path
 
-from peterbot.data import jobs_db_json
+from peterbot.data.collections import jobs
 
 
 def start_job(data_path: Path) -> dict:
-    """Start a new job and create its records directory.
+    """Create and start a new job.
+
+    This function:
+    - Determines the next sequential job index
+    - Records the job start time
+    - Computes and creates a job-specific records directory
+    - Persists the job metadata to the database
+    - Returns the complete job record, including its database ID
 
     Args:
-        data_path: Root data directory that contains `jobs.json` and the
-            `jobs/` subdirectory.
+        data_path (Path): Root data directory containing the `jobs/`
+            subdirectory used for job records storage.
 
     Returns:
-        A dictionary containing:
-        - `job_id`: The newly allocated integer identifier.
-        - `timestamp`: The creation timestamp for this job.
-        - `records_path`: The directory for this job's artifacts.
+        dict: A dictionary representing the newly created job, including:
+            - _id (str): MongoDB document ID for the job
+            - job_index (int): Sequential application-level job number
+            - start_time (str): Job start timestamp (YYYY-MM-DD HH:MM:SS)
+            - records_path (Path): Filesystem path to the job's records directory
+            - status (str): Current job status (e.g., "running")
     """
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    job_id = jobs_db_json.max_job_id(_jobs_json_path(data_path)) + 1
-    records_path = _get_job_records_path(data_path, job_id)
-    records_path.mkdir(parents=True, exist_ok=True)
+    job_data = {}
+    job_data["job_index"] = jobs.get_max_job_index() + 1
+    job_data["start_time"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    job_data["records_path"] = _get_job_records_path(data_path, job_data["job_index"])
+    job_data["status"] = "running"
+    job_data["_id"] = jobs.create_job(job_data)
 
-    return {
-        "job_id": job_id,
-        "timestamp": timestamp,
-        "records_path": records_path,
-    }
+    job_data["records_path"].mkdir(parents=True, exist_ok=True)
+    return job_data
 
 
-def end_job(job_data: dict, data_path: Path) -> None:
+def end_job(job_data: dict) -> None:
     """Persist job metadata to the global DB and per-job file.
 
     Args:
@@ -51,30 +51,15 @@ def end_job(job_data: dict, data_path: Path) -> None:
         OSError: If reading or writing job files fails.
         TypeError: If the jobs database contains an incompatible structure.
     """
-    # save to jobs json db
-    jobs_db_json.save_job(job_data, _jobs_json_path(data_path))
-
-    # when to use path vs dir?
-    # isn't recordspath in the job data?
-    job_id = job_data["job_id"]
-    records_path = _get_job_records_path(data_path, job_id)
-    job_json_path = records_path / "job.json"
-
     # save to job records
+    job_json_path = job_data["records_path"] / "job.json"
     with job_json_path.open("w", encoding="utf-8") as f:
         json.dump(job_data, f, cls=PathEncoder, indent=2, ensure_ascii=False)
 
-
-def _jobs_json_path(data_path: Path) -> Path:
-    """Return the canonical path to the global `jobs.json` file.
-
-    Args:
-        data_path: Root data directory for job state.
-
-    Returns:
-        The full path to `jobs.json` under `data_path`.
-    """
-    return data_path / "jobs.json"
+    # save updates to jobs db
+    job_data["status"] = "completed"
+    job_id = job_data.pop("_id")
+    jobs.update_job(job_id, job_data)
 
 
 def _get_job_records_path(data_path: Path, job_id: int) -> Path:
@@ -85,7 +70,7 @@ def _get_job_records_path(data_path: Path, job_id: int) -> Path:
         job_id: Integer job identifier.
 
     Returns:
-        The path to the `data_path/jobs/<job_id>` directory.
+        The path to the `[data_path]/jobs/<job_index>` directory.
     """
     return data_path / "jobs" / str(job_id)
 
