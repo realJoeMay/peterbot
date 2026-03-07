@@ -155,20 +155,3 @@ def test_get_max_job_index_empty_collection(mock_collection):
     result = jobs.get_max_job_index()
 
     assert result == 0
-
-
-# -----------------
-# Internal helpers
-# -----------------
-def test_sanitize_job_converts_path():
-    doc = {"path": Path("foo/bar")}
-    sanitized = jobs._sanitize_job(doc)
-
-    assert sanitized["path"] == "foo/bar"
-
-
-def test_sanitize_job_leaves_non_path_values():
-    doc = {"job_index": 1, "status": "running"}
-    sanitized = jobs._sanitize_job(doc)
-
-    assert sanitized == doc

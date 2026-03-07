@@ -1,10 +1,9 @@
 """
-jobs.py
+sites.py
 
-CRUD operations for the `jobs` MongoDB collection.
+CRUD operations for the `sites` MongoDB collection.
 """
 
-# from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from bson import ObjectId
@@ -14,50 +13,49 @@ from peterbot.data.mongo import get_collection
 from peterbot.data.collections.utils import sanitize_doc
 
 # Collection handle
-_jobs = get_collection("jobs")
+_sites = get_collection("sites")
 
 
 # -----------------
 # Create
 # -----------------
-def create_job(job: Dict[str, Any]) -> str:
+def create_site(site: Dict[str, Any]) -> str:
     """
-    Insert a new job document.
+    Insert a new site document.
 
     Args:
-        job (dict): Job data to insert
+        site (dict): Site data to insert
 
     Returns:
         str: Inserted document ID as a string
     """
-    job = sanitize_doc(job)
-    result: InsertOneResult = _jobs.insert_one(job)
+    site = sanitize_doc(site)
+    result: InsertOneResult = _sites.insert_one(site)
     return str(result.inserted_id)
 
 
 # -----------------
 # Read
 # -----------------
-def get_job(doc_id: str) -> Optional[Dict[str, Any]]:
+def get_site(site_id: str) -> Optional[Dict[str, Any]]:
     """
-    Retrieve a single job by ID.
-
+    Retrieve a single site by ID.
     Args:
-        doc_id (str): MongoDB ObjectId as a string
+        site_id (str): MongoDB ObjectId as a string
 
     Returns:
-        dict | None: Job document if found, else None
+        dict | None: Site document if found, else None
     """
-    return _jobs.find_one({"_id": ObjectId(doc_id)})
+    return _sites.find_one({"_id": ObjectId(site_id)})
 
 
-def list_jobs(
+def list_sites(
     filters: Optional[Dict[str, Any]] = None,
     limit: int = 100,
     skip: int = 0,
 ) -> List[Dict[str, Any]]:
     """
-    List jobs with optional filtering and pagination.
+    List sites with optional filtering and pagination.
 
     Args:
         filters (dict, optional): MongoDB query filters
@@ -65,29 +63,28 @@ def list_jobs(
         skip (int): Number of documents to skip
 
     Returns:
-        list[dict]: List of job documents
+        list[dict]: List of site documents
     """
-    cursor = _jobs.find(filters or {}).skip(skip).limit(limit)
+    cursor = _sites.find(filters or {}).skip(skip).limit(limit)
     return list(cursor)
 
 
 # -----------------
 # Update
 # -----------------
-def update_job(job_id: str, updates: Dict[str, Any]) -> bool:
+def update_site(site_id: str, updates: Dict[str, Any]) -> bool:
     """
-    Update fields on an existing job.
-
+    Update fields on an existing site.
     Args:
-        job_id (str): MongoDB ObjectId as a string
+        site_id (str): MongoDB ObjectId as a string
         updates (dict): Fields to update
 
     Returns:
         bool: True if a document was modified
     """
     updates = sanitize_doc(updates)
-    result: UpdateResult = _jobs.update_one(
-        {"_id": ObjectId(job_id)},
+    result: UpdateResult = _sites.update_one(
+        {"_id": ObjectId(site_id)},
         {"$set": updates},
     )
     return result.modified_count == 1
@@ -96,23 +93,23 @@ def update_job(job_id: str, updates: Dict[str, Any]) -> bool:
 # -----------------
 # Delete
 # -----------------
-def delete_job(job_id: str) -> bool:
+def delete_site(site_id: str) -> bool:
     """
-    Delete a job by ID.
+    Delete a site by ID.
 
     Args:
-        job_id (str): MongoDB ObjectId as a string
+        site_id (str): MongoDB ObjectId as a string
 
     Returns:
         bool: True if a document was deleted
     """
-    result: DeleteResult = _jobs.delete_one({"_id": ObjectId(job_id)})
+    result: DeleteResult = _sites.delete_one({"_id": ObjectId(site_id)})
     return result.deleted_count == 1
 
 
-def delete_job_by_index(job_index: int) -> bool:
+def delete_site_by_index(job_index: int) -> bool:
     """
-    Delete a job by its application-level job index.
+    Delete a site by its application-level job index.
 
     Args:
         job_index (int): Sequential job number
@@ -120,27 +117,27 @@ def delete_job_by_index(job_index: int) -> bool:
     Returns:
         bool: True if a document was deleted
     """
-    result: DeleteResult = _jobs.delete_one({"job_index": job_index})
+    result: DeleteResult = _sites.delete_one({"job_index": job_index})
     return result.deleted_count == 1
 
 
 # -----------------
 # Business Logic
 # -----------------
-def get_max_job_index() -> int:
+def get_max_site_index() -> int:
     """
-    Get the maximum jobIndex value in the jobs collection.
+    Get the maximum jobIndex value in the sites collection.
 
     Returns:
         int: Highest jobIndex found, or 0 if the collection is empty
     """
-    doc = _jobs.find_one(
+    doc = _sites.find_one(
         {},
-        sort=[("job_index", -1)],
-        projection={"job_index": 1},
+        sort=[("site_index", -1)],
+        projection={"site_index": 1},
     )
 
     if not doc:
         return 0
 
-    return doc.get("job_index", 0)
+    return doc.get("site_index", 0)
