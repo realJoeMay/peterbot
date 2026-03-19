@@ -3,8 +3,37 @@
 This document describes the JSON files used as lightweight data stores.
 
 ## Locations
-- `data/sites.json` — registry of sites (e.g., diocesan sites) to crawl or query.
 - `data/jobs.json` — append-only log of job runs with minimal metadata.
+- `data/sites.json` — registry of sites (e.g., diocesan sites) to crawl or query.
+
+## jobs.json
+Purpose: Global, append-only ledger of job runs created by `peterbot.jobs.utils.job`.
+
+Structure: A JSON array. Each element is an object representing one job run.
+
+Typical example (recommended shape):
+~~~json
+[
+  {
+    "job_id": 5,
+    "timestamp": "2025-11-15 07:13:23",
+    "records_path": "data/jobs/5",
+    "job_description": "Get new links from Diocese parish page."
+  }
+]
+~~~
+
+Fields:
+- `job_id` (integer, required) — monotonically increasing identifier assigned at start.
+- `timestamp` (string, required) — job start time in `YYYY-MM-DD HH:MM:SS` local time.
+- `records_path` (string, required) — filesystem path to the per-job records directory (`data/jobs/<job_id>`). Store as a string in JSON.
+- `job_description` (string, optional) — human-friendly description of what the job did.
+
+Notes:
+- The helper `start_job()` allocates a new `job_id` and records directory; `end_job()` appends the finalized job object to `jobs.json` and writes `data/jobs/<id>/job.json`.
+- When persisting to JSON, ensure all values (e.g., paths) are JSON-serializable strings.
+- `jobs.json` is treated as a list; if it ever contained a single object, it is coerced to a one-item list on write.
+
 
 ## sites.json
 Purpose: Configure known sites and key URLs used by jobs.
@@ -35,33 +64,6 @@ Notes:
 - The code expects `sites.json` to be a list of objects and looks up entries by `site_id`.
 - Additional fields are allowed; jobs should read only the keys they need.
 
-## jobs.json
-Purpose: Global, append-only ledger of job runs created by `peterbot.jobs.utils.job`.
-
-Structure: A JSON array. Each element is an object representing one job run.
-
-Typical example (recommended shape):
-~~~json
-[
-  {
-    "job_id": 5,
-    "timestamp": "2025-11-15 07:13:23",
-    "records_path": "data/jobs/5",
-    "job_description": "Get new links from Diocese parish page."
-  }
-]
-~~~
-
-Fields:
-- `job_id` (integer, required) — monotonically increasing identifier assigned at start.
-- `timestamp` (string, required) — job start time in `YYYY-MM-DD HH:MM:SS` local time.
-- `records_path` (string, required) — filesystem path to the per-job records directory (`data/jobs/<job_id>`). Store as a string in JSON.
-- `job_description` (string, optional) — human-friendly description of what the job did.
-
-Notes:
-- The helper `start_job()` allocates a new `job_id` and records directory; `end_job()` appends the finalized job object to `jobs.json` and writes `data/jobs/<id>/job.json`.
-- When persisting to JSON, ensure all values (e.g., paths) are JSON-serializable strings.
-- `jobs.json` is treated as a list; if it ever contained a single object, it is coerced to a one-item list on write.
 
 
 ## Validation and Conventions

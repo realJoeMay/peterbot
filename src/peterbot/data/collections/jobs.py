@@ -4,7 +4,6 @@ jobs.py
 CRUD operations for the `jobs` MongoDB collection.
 """
 
-# from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from bson import ObjectId

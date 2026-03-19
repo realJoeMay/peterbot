@@ -93,51 +93,51 @@ def update_site(site_id: str, updates: Dict[str, Any]) -> bool:
 # -----------------
 # Delete
 # -----------------
-def delete_site(site_id: str) -> bool:
+def delete_site(doc_id: str) -> bool:
     """
-    Delete a site by ID.
+    Delete a site by doc ID.
 
     Args:
-        site_id (str): MongoDB ObjectId as a string
+        doc_id (str): MongoDB ObjectId as a string
 
     Returns:
         bool: True if a document was deleted
     """
-    result: DeleteResult = _sites.delete_one({"_id": ObjectId(site_id)})
+    result: DeleteResult = _sites.delete_one({"_id": ObjectId(doc_id)})
     return result.deleted_count == 1
 
 
-def delete_site_by_index(job_index: int) -> bool:
+def delete_site_by_id(site_id: int) -> bool:
     """
-    Delete a site by its application-level job index.
+    Delete a site by its application-level site ID.
 
     Args:
-        job_index (int): Sequential job number
+        site_id (int): Sequential site ID
 
     Returns:
         bool: True if a document was deleted
     """
-    result: DeleteResult = _sites.delete_one({"job_index": job_index})
+    result: DeleteResult = _sites.delete_one({"site_id": site_id})
     return result.deleted_count == 1
 
 
 # -----------------
 # Business Logic
 # -----------------
-def get_max_site_index() -> int:
+def get_max_site_id() -> int:
     """
-    Get the maximum jobIndex value in the sites collection.
+    Get the maximum site_id value in the sites collection.
 
     Returns:
-        int: Highest jobIndex found, or 0 if the collection is empty
+        int: Highest site_id found, or 0 if the collection is empty
     """
     doc = _sites.find_one(
         {},
-        sort=[("site_index", -1)],
-        projection={"site_index": 1},
+        sort=[("site_id", -1)],
+        projection={"site_id": 1},
     )
 
     if not doc:
         return 0
 
-    return doc.get("site_index", 0)
+    return doc.get("site_id", 0)
