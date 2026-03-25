@@ -5,9 +5,10 @@ from datetime import datetime
 from pathlib import Path
 
 from peterbot.data.collections import jobs
+from peterbot.data.data_store import get_data_store_dir
 
 
-def start_job(data_path: Path) -> dict:
+def start_job(data_path: Path | None) -> dict:
     """Create and start a new job.
 
     This function:
@@ -29,6 +30,9 @@ def start_job(data_path: Path) -> dict:
             - records_path (Path): Filesystem path to the job's records directory
             - status (str): Current job status (e.g., "running")
     """
+
+    data_path = data_path or get_data_store_dir()
+
     job_data = {}
     job_data["job_index"] = jobs.get_max_job_index() + 1
     job_data["start_time"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")

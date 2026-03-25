@@ -10,7 +10,7 @@ from pathlib import Path
 from peterbot.jobs.utils import job
 
 
-def run(data_path: Path) -> None:
+def run(data_path: Path | None = None) -> None:
     """Run the test job.
 
     Parameters:
@@ -19,8 +19,15 @@ def run(data_path: Path) -> None:
     """
     job_data = job.start_job(data_path)
 
-    records_path = job_data["records_path"]
-    artifact_file = records_path / "artifact.txt"
-    artifact_file.write_text("Other data here.", encoding="utf-8")
+    try:
+        records_path = job_data["records_path"]
+        artifact_file = records_path / "artifact.txt"
+        artifact_file.write_text("This is a job artifact.", encoding="utf-8")
+        job_data["result"] = "success"
 
-    job.end_job(job_data)
+    except Exception as e:
+        job_data["result"] = "error"
+        job_data["error"] = str(e)
+
+    finally:
+        job.end_job(job_data)

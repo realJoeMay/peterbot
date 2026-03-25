@@ -38,29 +38,36 @@ def run(data_dir: Path, diocese_site_id: int) -> None:
     """
     job_data = job.start_job(data_dir)
 
-    # get download url
-    site_json = data_dir / "sites.json"
-    site_info = sites_db_json.get_site_info(diocese_site_id, site_json)
-    url = site_info["parishes_page"]
+    try:
+        # get download url
+        site_json = data_dir / "sites.json"
+        site_info = sites_db_json.get_site_info(diocese_site_id, site_json)
+        url = site_info["parishes_page"]
 
-    # download page
-    downloads_dir = job_data["records_path"] / "downloads"
-    html_path = downloads_dir / download.url_to_path(url)
-    download.page_html(url, html_path)
+        # download page
+        downloads_dir = job_data["records_path"] / "downloads"
+        html_path = downloads_dir / download.url_to_path(url)
+        download.page_html(url, html_path)
 
-    # map all external links
-    links_map = map_links(downloads_dir)
+        # map all external links
+        links_map = map_links(downloads_dir)
 
-    # save unique links to CSV
-    unique_links = list({link for links in links_map.values() for link in links})
-    csv_path = job_data["records_path"] / "external_links.csv"
-    with open(csv_path, "w", newline="", encoding="utf-8") as f:
-        writer = csv.writer(f)
-        for value in unique_links:
-            writer.writerow([value])
+        # save unique links to CSV
+        unique_links = list({link for links in links_map.values() for link in links})
+        csv_path = job_data["records_path"] / "external_links.csv"
+        with open(csv_path, "w", newline="", encoding="utf-8") as f:
+            writer = csv.writer(f)
+            for value in unique_links:
+                writer.writerow([value])
 
-    # end job
-    job.end_job(job_data)
+        job_data["result"] = "success"
+
+    except Exception as e:
+        job_data["result"] = "error"
+        job_data["error"] = str(e)
+
+    finally:
+        job.end_job(job_data)
 
 
 def map_links(downloads_dir: Path) -> dict[str, list[str]]:
