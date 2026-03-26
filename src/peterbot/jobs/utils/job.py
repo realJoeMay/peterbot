@@ -1,11 +1,14 @@
 """Common helpers for job lifecycle and paths."""
 
-import json
 from datetime import datetime
+import json
+import logging
 from pathlib import Path
 
 from peterbot.data.collections import jobs
 from peterbot.data.data_store import get_data_store_dir
+
+logger = logging.getLogger(__name__)
 
 
 def start_job(data_path: Path | None) -> dict:
@@ -41,6 +44,12 @@ def start_job(data_path: Path | None) -> dict:
     job_data["_id"] = jobs.create_job(job_data)
 
     job_data["records_path"].mkdir(parents=True, exist_ok=True)
+    logger.info(
+        "Started job %s (db_id=%s); records path: %s",
+        job_data["job_index"],
+        job_data["_id"],
+        job_data["records_path"],
+    )
     return job_data
 
 
@@ -55,6 +64,12 @@ def end_job(job_data: dict) -> None:
         OSError: If reading or writing job files fails.
         TypeError: If the jobs database contains an incompatible structure.
     """
+    logger.info(
+        "Ending job %s (db_id=%s); writing records to %s",
+        job_data.get("job_index"),
+        job_data.get("_id"),
+        job_data.get("records_path"),
+    )
     # save to job records
     job_json_path = job_data["records_path"] / "job.json"
     with job_json_path.open("w", encoding="utf-8") as f:
@@ -64,6 +79,11 @@ def end_job(job_data: dict) -> None:
     job_data["status"] = "completed"
     job_id = job_data.pop("_id")
     jobs.update_job(job_id, job_data)
+    logger.info(
+        "Completed job %s (db_id=%s); status persisted and job.json updated",
+        job_data.get("job_index"),
+        job_id,
+    )
 
 
 def _get_job_records_path(data_path: Path, job_id: int) -> Path:
